@@ -161,3 +161,101 @@ Build prerequisites:
     app.js                      SPA logic
   dist/                         (gitignored) build outputs
   node_modules/                 (gitignored)
+
+## Market context and product strategy
+
+Research conducted 2026-05-12 during a strategic review.
+
+### What already exists in this space
+
+Local-folder manhwa/webtoon readers for Windows are a crowded, mature
+niche. The closest competitors:
+
+- Yomikiru: Electron + React, local manga/manhwa/comic/webtoon/EPUB,
+  vertical scroll + LTR + RTL, AniList sync, bookmarks, reader presets.
+  ~460 GitHub stars. https://github.com/mienaiyami/yomikiru
+- Houdoku: Electron, local AND online via Tiyo plugin + extensions
+  (MangaDex, Mangakakalot), AniList/MAL sync, Discord status.
+  https://github.com/xgi/houdoku
+- Mangayomi: Flutter, cross-platform (Win/Mac/Linux/iOS/Android),
+  manga + novel + anime, Tachiyomi-inspired. 2.7k stars.
+  https://github.com/kodjodevf/mangayomi
+- Suwayomi-Server + clients (Sorayomi, JUI, VaadinUI): Java desktop,
+  reuses Mihon's extension ecosystem.
+  https://github.com/Suwayomi/Suwayomi-Server
+- YACReader: C++/Qt, "flow mode" for webtoon-style continuous scroll.
+- OpenComic: Node + Electron. https://github.com/ollm/OpenComic
+- Clovre: web app, local manhwa + AniList.
+  https://github.com/rehhouari/clovre
+- Rulia: Microsoft Store, many formats including PDF/EPUB.
+
+Conclusion: the "local folder + chapter library + webtoon scroll" niche
+is filled. This app's local-reading features alone do not differentiate.
+
+### Where this app genuinely differs
+
+Picture-in-Picture / always-on-top floating reader is missing from every
+comparable app. Verified via GitHub feature-request search: nobody is
+asking for it, nobody has shipped it. That is a real differentiator,
+even though the audience for "read while multitasking" is small
+(estimated hundreds to low thousands globally).
+
+### Why streaming/extension features should NOT be added
+
+Three reasons in priority order:
+
+1. Legal hostility. Tachiyomi (the dominant Android manga reader) was
+   shut down in January 2024 by a cease-and-desist from Kakao
+   Entertainment. Mihon (its successor) survives only by refusing to
+   bundle extension repos. Adding streaming via aggregator scrapers
+   exposes this project to the same legal risk under the maintainer's
+   real name. The repo is at Anas-HK/personalMangaReader on GitHub,
+   tied to a personal identity.
+
+2. Saturated competition. Mihon (8.5k stars), Mangayomi (2.7k stars),
+   Suwayomi (reuses Mihon's entire ecosystem), Houdoku all already
+   cover streaming. Each has multi-person teams or years of accumulated
+   scraper code. A solo new entrant cannot catch up.
+
+3. Maintenance treadmill. Aggregator sites change HTML every few
+   months, deploy anti-bot challenges, shuffle image tiles. Tachiyomi
+   has ~200 community-maintained extensions because no single dev can
+   keep up. This project saw this firsthand when comic_dl's MangaDex
+   scraper broke mid-session and mangabot-2.5's catalogs all 404'd
+   from age.
+
+### Strategic positioning if growth is wanted
+
+The defensible angle is "the reader for people who already have files":
+
+- Stay local-only. No extensions, no scrapers, no legal exposure.
+- Integrate WITH existing downloaders (mangapill_dl.py,
+  mangadex-downloader, Mihon's downloads folder, filesystem watchers).
+  Pitch: "use any tool to download; this is the reader."
+- Specialize harder than competitors on webtoon UX: infinite-scroll
+  across chapter boundaries (auto-transition), reading-pace-aware
+  prefetch, gap detection between scan tiles.
+- Ship PiP polish that nobody else bothers with: multiple positions/
+  sizes, edge-snap, transparency on hover-away, Windows 11 jumplist +
+  snap-layout integration, study-mode (PiP + pomodoro timer).
+
+### Decisions for future agents
+
+- Do NOT propose adding extension-based streaming. The cost-benefit is
+  decisively negative.
+- Local-folder reading is the scope. Anything outside the user's
+  filesystem is out of scope.
+- Differentiation comes from the PiP/multitasking workflow and webtoon
+  UX depth, not from sources/formats/library-management features.
+- If the user asks about market positioning, point them at this
+  section instead of re-doing the research.
+
+### Sources (verified 2026-05-12)
+
+- https://github.com/mienaiyami/yomikiru
+- https://houdoku.org/
+- https://github.com/kodjodevf/mangayomi
+- https://github.com/Suwayomi/Suwayomi-Server
+- https://github.com/mihonapp/mihon
+- https://alternativeto.net/news/2024/1/manga-reader-app-tachiyomi-ceases-development-amid-legal-threats-from-kakao-entertainment/
+- https://en.wikipedia.org/wiki/Tachiyomi
