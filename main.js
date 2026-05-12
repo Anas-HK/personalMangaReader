@@ -179,10 +179,8 @@ async function createMainWindow() {
       event.preventDefault();
     }
   });
-  await mainWindow.webContents.session.clearCache();
   await mainWindow.loadFile('renderer/index.html');
   mainWindow.show();
-  mainWindow.webContents.openDevTools({ mode: 'detach' });
   const save = async () => {
     if (mainWindow.isDestroyed() || mainWindow.isFullScreen() || mainWindow.isMaximized()) return;
     const b = mainWindow.getBounds();

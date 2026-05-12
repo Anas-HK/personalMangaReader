@@ -4,10 +4,42 @@
   "private": true,
   "description": "Local manhwa/manga reader with PiP support",
   "main": "main.js",
+  "author": "Anas",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "dist": "electron-builder",
+    "pack": "electron-builder --dir"
   },
   "devDependencies": {
-    "electron": "^33.0.0"
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.anas.mangareader",
+    "productName": "Manga Reader",
+    "copyright": "Copyright (c) 2026 Anas",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "signtoolOptions": null,
+      "verifyUpdateCodeSignature": false
+    },
+    "portable": {
+      "artifactName": "MangaReader-${version}-portable.${ext}"
+    },
+    "asar": true
   }
 }
