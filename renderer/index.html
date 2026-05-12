@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manga Reader</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="loading">
+  <header class="titlebar" id="titlebar">
+    <div class="titlebar-drag">
+      <button class="back-btn" id="back-btn" title="Back (Esc)" aria-label="Back">‹</button>
+      <span class="brand"><span class="brand-dot"></span> manga</span>
+      <span class="breadcrumb" id="breadcrumb"></span>
+    </div>
+    <div class="titlebar-controls">
+      <button class="ctrl" id="pip-btn" title="Picture-in-Picture (P)" aria-label="PiP">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><rect x="11" y="11" width="8" height="6" rx="1" fill="currentColor"/></svg>
+      </button>
+      <button class="ctrl" id="aot-btn" title="Always on top (T)" aria-label="Always on top">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v10M6 9l6-6 6 6M5 21h14"/></svg>
+      </button>
+      <button class="ctrl" id="full-btn" title="Fullscreen (F)" aria-label="Fullscreen">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      </button>
+      <button class="ctrl" id="min-btn" title="Minimize" aria-label="Minimize">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg>
+      </button>
+      <button class="ctrl" id="max-btn" title="Maximize" aria-label="Maximize">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="1"/></svg>
+      </button>
+      <button class="ctrl close" id="close-btn" title="Close" aria-label="Close">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+  </header>
+  <main id="app"></main>
+  <div id="toast" class="toast" aria-live="polite"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
