@@ -192,13 +192,13 @@ async function createMainWindow() {
   mainWindow.on('move', save);
 }
 
-function togglePipVisibility() {
-  if (!pipWindow || pipWindow.isDestroyed()) return;
-  if (pipWindow.isVisible()) {
-    pipWindow.hide();
-  } else {
-    pipWindow.show();
-  }
+function toggleActiveWindowVisibility() {
+  const target = (pipWindow && !pipWindow.isDestroyed())
+    ? pipWindow
+    : (mainWindow && !mainWindow.isDestroyed() ? mainWindow : null);
+  if (!target) return;
+  if (target.isVisible()) target.hide();
+  else target.show();
 }
 
 function createPipWindow(query) {
@@ -239,12 +239,9 @@ function createPipWindow(query) {
     if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
       mainWindow.hide();
     }
-    const ok = globalShortcut.register(PIP_TOGGLE_ACCELERATOR, togglePipVisibility);
-    if (!ok) console.error(`[shortcut] failed to register ${PIP_TOGGLE_ACCELERATOR}`);
   });
   pipWindow.on('closed', () => {
     pipWindow = null;
-    globalShortcut.unregister(PIP_TOGGLE_ACCELERATOR);
     if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
       mainWindow.show();
     }
@@ -319,6 +316,8 @@ app.whenReady().then(async () => {
   if (!state.libraryRoot) state.libraryRoot = DEFAULT_LIBRARY_ROOT;
   handleAssetProtocol();
   await createMainWindow();
+  const ok = globalShortcut.register(PIP_TOGGLE_ACCELERATOR, toggleActiveWindowVisibility);
+  if (!ok) console.error(`[shortcut] failed to register ${PIP_TOGGLE_ACCELERATOR}`);
 });
 
 app.on('window-all-closed', () => {

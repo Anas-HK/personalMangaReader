@@ -435,19 +435,32 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .reader-view:hover .page-progress,
 .reader-view.toolbar-hidden .page-progress { opacity: 1; }
 
-/* ----- PiP mode: ultra-minimal (image only; chrome reveals on hover) ----- */
+/* ----- PiP mode: ultra-minimal (image only; chrome reveals on hover) -----
+   The titlebar stays permanently mounted at the top with a transparent
+   background. This is intentional: Electron computes -webkit-app-region: drag
+   from each element's bounding client rect, so any transform/translate that
+   moves the titlebar offscreen also moves its drag region offscreen, breaking
+   window-drag. Keep the box where it is, fade only the visual content. */
 body.pip-mode .titlebar {
   height: 28px;
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 100;
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  transition: background 0.18s, border-bottom-color 0.18s;
+}
+body.pip-mode.show-chrome .titlebar {
   background: rgba(10, 10, 12, 0.85);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border-soft);
-  transform: translateY(-100%);
-  transition: transform 0.18s ease;
+  border-bottom-color: var(--border-soft);
 }
-body.pip-mode.show-chrome .titlebar { transform: translateY(0); }
+/* Hide children entirely when chrome is off so their no-drag regions (close +
+   pip-toggle buttons) don't punch holes in the titlebar drag region. */
+body.pip-mode .titlebar > .titlebar-drag,
+body.pip-mode .titlebar > .titlebar-controls { display: none; }
+body.pip-mode.show-chrome .titlebar > .titlebar-drag { display: flex; }
+body.pip-mode.show-chrome .titlebar > .titlebar-controls { display: flex; }
 body.pip-mode .titlebar .back-btn,
 body.pip-mode .titlebar .breadcrumb { display: none; }
 body.pip-mode .brand { font-size: 11px; }
@@ -457,18 +470,8 @@ body.pip-mode .titlebar-controls .ctrl#min-btn,
 body.pip-mode .titlebar-controls .ctrl#max-btn,
 body.pip-mode .titlebar-controls .ctrl#aot-btn { display: none; }
 
-/* Always-on drag strip across the top edge so the frameless window stays movable
-   even while the titlebar is hidden. Real DOM element (not a pseudo) because
-   -webkit-app-region: drag on ::before is unreliable in Electron. */
+/* #pip-drag-strip is no longer used; titlebar itself provides drag at top 28px. */
 #pip-drag-strip { display: none; }
-body.pip-mode #pip-drag-strip {
-  display: block;
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 6px;
-  z-index: 99;
-  -webkit-app-region: drag;
-}
 
 body.pip-mode #app {
   top: 0;

@@ -101,17 +101,30 @@ attention split). Closing the PiP restores the main window. The PiP
 renderer never sees the main window state live; the two share state.json
 so the next launch is consistent.
 
-In PiP mode the renderer is intentionally ultra-minimal: titlebar and
-reader-toolbar hidden by default, only the manga image visible. Moving
-the mouse into the top ~40px reveals the titlebar (close + PiP toggle);
-it auto-hides after ~1.1s once the mouse leaves the zone. The 6px
-#pip-drag-strip div paints at the very top edge with -webkit-app-region:
-drag, keeping the frameless window movable while the titlebar is hidden.
+In PiP mode the renderer is intentionally ultra-minimal: the titlebar
+stays permanently mounted at the top in its real layout position but is
+fully transparent and its children are display:none. Moving the mouse
+into the top ~40px adds .show-chrome to the body which fades in the
+titlebar background and re-shows the close + PiP toggle buttons. After
+the mouse leaves the zone for ~1.1s, .show-chrome is removed and the
+chrome fades away again. The reader toolbar and bottom page-progress
+indicator are display:none throughout PiP mode.
 
-While the PiP window exists, the accelerator at PIP_TOGGLE_ACCELERATOR
-(top of main.js, currently Ctrl+Shift+Z) is registered globally and
-toggles PiP visibility (pipWindow.hide / show, not close). It is
-unregistered on PiP close so the key combo is freed for other apps.
+Why the titlebar must not be hidden via transform/translate: Electron
+computes -webkit-app-region: drag regions from each element's bounding
+client rect, and CSS transforms move the bounding rect. A
+"transform: translateY(-100%)" on the titlebar moves its drag region
+offscreen with it, breaking window-drag whenever chrome is hidden and
+making drag intermittent after resize (the drag-region map can be slow
+to recompute). Keeping the titlebar permanently at its real position
+and fading only the visual chrome keeps the drag region stable at
+y=[0, 28] in all states.
+
+The PIP_TOGGLE_ACCELERATOR (top of main.js, currently Ctrl+Shift+Z) is
+registered globally on app.whenReady and unregistered on app.will-quit.
+toggleActiveWindowVisibility() targets the PiP window if it exists,
+otherwise the main window, so the same shortcut hides/shows whichever
+window is currently in use.
 
 ## Keyboard
 
@@ -123,7 +136,7 @@ unregistered on PiP close so the key combo is freed for other apps.
   Esc                 back / exit fullscreen
   Home / End          top / bottom of current chapter
   Space               smooth scroll one viewport down
-  Ctrl+Shift+Z        hide / show PiP window (global, only while PiP is open)
+  Ctrl+Shift+Z        hide / show the active window (PiP if open, else main)
   F12 / Ctrl+Shift+I  DevTools (both windows)
 
 ## Building
