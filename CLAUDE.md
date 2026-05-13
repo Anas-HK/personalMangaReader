@@ -62,8 +62,8 @@ present, otherwise the first page of the first chapter.
   ?mode=pip query param.
 
 State lives in %APPDATA%\manga-reader\state.json (libraryRoot,
-per-series lastChapterIdx and read list) and window.json (window
-bounds, restored on launch).
+mainAlwaysOnTop preference, per-series lastChapterIdx and read list)
+and window.json (window bounds, restored on launch).
 
 ## How images are loaded (important)
 
@@ -125,6 +125,29 @@ registered globally on app.whenReady and unregistered on app.will-quit.
 toggleActiveWindowVisibility() targets the PiP window if it exists,
 otherwise the main window, so the same shortcut hides/shows whichever
 window is currently in use.
+
+## Always-on-top
+
+Two windows, two policies:
+- Main window: user toggles via the title-bar button or the T key. The
+  preference persists in state.json (mainAlwaysOnTop) and is restored
+  on launch.
+- PiP window: permanently always-on-top. The toggle-aot IPC refuses to
+  turn it off and the T key in PiP mode shows a toast instead of
+  toggling.
+
+Both use Electron's 'screen-saver' level (the strongest level Electron
+exposes; defined as AOT_LEVEL in main.js). The default 'floating' level
+on Windows loses to other topmost windows, fullscreen video, and some
+OS surfaces, so always use applyAlwaysOnTop() instead of the raw
+setAlwaysOnTop() to get the correct level plus
+setVisibleOnAllWorkspaces({ visibleOnFullScreen: true }).
+
+Windows can drop the topmost flag during show/hide, restore-from-
+minimize, and fullscreen transitions. bindAlwaysOnTopReinforcement()
+re-asserts the flag on the 'show', 'focus', 'restore',
+'enter-full-screen', and 'leave-full-screen' window events whenever
+the caller-supplied intent function still returns true.
 
 ## Keyboard
 

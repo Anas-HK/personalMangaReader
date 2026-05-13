@@ -16,9 +16,41 @@ const WINDOW_PATH = path.join(app.getPath('userData'), 'window.json');
 
 const PIP_TOGGLE_ACCELERATOR = 'CommandOrControl+Shift+Z';
 
+// 'screen-saver' is the strongest Electron level. On Windows the default
+// 'floating' level loses to other topmost windows, fullscreen video, and
+// some OS surfaces; 'screen-saver' uses HWND_TOPMOST at the strongest
+// priority Electron exposes and survives fullscreen toggles. PiP is locked
+// to on; main window honors user intent (mainAlwaysOnTopWanted).
+const AOT_LEVEL = 'screen-saver';
+
 let mainWindow = null;
 let pipWindow = null;
+let mainAlwaysOnTopWanted = false;
 let state = { libraryRoot: DEFAULT_LIBRARY_ROOT, series: {} };
+
+function applyAlwaysOnTop(win, on) {
+  if (!win || win.isDestroyed()) return;
+  if (on) {
+    win.setAlwaysOnTop(true, AOT_LEVEL);
+    try { win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true }); } catch {}
+  } else {
+    win.setAlwaysOnTop(false);
+    try { win.setVisibleOnAllWorkspaces(false); } catch {}
+  }
+}
+
+// Windows can drop the topmost flag during show/hide, restore, and
+// fullscreen transitions. Re-assert on each of those events whenever
+// the caller's intent is still "on".
+function bindAlwaysOnTopReinforcement(win, getIntent) {
+  const reapply = () => {
+    if (win.isDestroyed()) return;
+    applyAlwaysOnTop(win, !!getIntent());
+  };
+  for (const ev of ['show', 'focus', 'restore', 'enter-full-screen', 'leave-full-screen']) {
+    win.on(ev, reapply);
+  }
+}
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'asset', privileges: { secure: true, standard: true, supportFetchAPI: true, stream: true, bypassCSP: true } }
@@ -183,6 +215,8 @@ async function createMainWindow() {
   });
   await mainWindow.loadFile('renderer/index.html');
   mainWindow.show();
+  if (mainAlwaysOnTopWanted) applyAlwaysOnTop(mainWindow, true);
+  bindAlwaysOnTopReinforcement(mainWindow, () => mainAlwaysOnTopWanted);
   const save = async () => {
     if (mainWindow.isDestroyed() || mainWindow.isFullScreen() || mainWindow.isMaximized()) return;
     const b = mainWindow.getBounds();
@@ -225,6 +259,9 @@ function createPipWindow(query) {
       allowRunningInsecureContent: true,
     }
   });
+  // Upgrade to the strongest topmost level and reinforce on state changes.
+  applyAlwaysOnTop(pipWindow, true);
+  bindAlwaysOnTopReinforcement(pipWindow, () => true);
   const qs = new URLSearchParams({ mode: 'pip', ...query }).toString();
   pipWindow.loadFile('renderer/index.html', { search: qs });
   pipWindow.webContents.on('before-input-event', (event, input) => {
@@ -236,6 +273,7 @@ function createPipWindow(query) {
   });
   pipWindow.once('ready-to-show', () => {
     pipWindow.show();
+    applyAlwaysOnTop(pipWindow, true);
     if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
       mainWindow.hide();
     }
@@ -288,14 +326,27 @@ ipcMain.handle('window:maximize', (e) => {
   return w.isMaximized();
 });
 ipcMain.handle('window:close', (e) => BrowserWindow.fromWebContents(e.sender)?.close());
-ipcMain.handle('window:toggle-aot', (e) => {
+ipcMain.handle('window:toggle-aot', async (e) => {
   const w = BrowserWindow.fromWebContents(e.sender);
   if (!w) return false;
-  const next = !w.isAlwaysOnTop();
-  w.setAlwaysOnTop(next);
+  // PiP is permanently always-on-top; refuse to turn it off and reassert.
+  if (pipWindow && w === pipWindow) {
+    applyAlwaysOnTop(pipWindow, true);
+    return true;
+  }
+  const next = !mainAlwaysOnTopWanted;
+  mainAlwaysOnTopWanted = next;
+  applyAlwaysOnTop(w, next);
+  state.mainAlwaysOnTop = next;
+  await saveJSON(STATE_PATH, state);
   return next;
 });
-ipcMain.handle('window:is-aot', (e) => !!BrowserWindow.fromWebContents(e.sender)?.isAlwaysOnTop());
+ipcMain.handle('window:is-aot', (e) => {
+  const w = BrowserWindow.fromWebContents(e.sender);
+  if (!w) return false;
+  if (pipWindow && w === pipWindow) return true;
+  return !!w.isAlwaysOnTop();
+});
 ipcMain.handle('window:toggle-fullscreen', (e) => {
   const w = BrowserWindow.fromWebContents(e.sender);
   if (!w) return false;
@@ -314,6 +365,7 @@ ipcMain.handle('window:close-pip', () => {
 app.whenReady().then(async () => {
   state = await loadJSON(STATE_PATH, { libraryRoot: DEFAULT_LIBRARY_ROOT, series: {} });
   if (!state.libraryRoot) state.libraryRoot = DEFAULT_LIBRARY_ROOT;
+  mainAlwaysOnTopWanted = !!state.mainAlwaysOnTop;
   handleAssetProtocol();
   await createMainWindow();
   const ok = globalShortcut.register(PIP_TOGGLE_ACCELERATOR, toggleActiveWindowVisibility);

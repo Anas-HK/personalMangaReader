@@ -476,7 +476,11 @@ function bindKeys() {
       if (k === ' ')    { $app.scrollBy({ top: $app.clientHeight * 0.85, behavior: 'smooth' }); e.preventDefault(); return; }
     }
     if (k === 'p' || k === 'P') { togglePip(); e.preventDefault(); }
-    else if (k === 't' || k === 'T') { document.getElementById('aot-btn')?.click(); e.preventDefault(); }
+    else if (k === 't' || k === 'T') {
+      if (PIP_MODE) { toast('PiP stays on top'); }
+      else { document.getElementById('aot-btn')?.click(); }
+      e.preventDefault();
+    }
     else if (k === 'f' || k === 'F' || k === 'F11') { document.getElementById('full-btn')?.click(); e.preventDefault(); }
     else if (k === 'Escape') {
       if (state.fullscreen) { api.window.toggleFullscreen(); refreshIcons(); }
