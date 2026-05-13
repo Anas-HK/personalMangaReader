@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu, protocol } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu, protocol, globalShortcut } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs/promises');
 
@@ -13,6 +13,8 @@ const DEFAULT_LIBRARY_ROOT = 'C:\\DownloadedMaterial\\coms';
 
 const STATE_PATH = path.join(app.getPath('userData'), 'state.json');
 const WINDOW_PATH = path.join(app.getPath('userData'), 'window.json');
+
+const PIP_TOGGLE_ACCELERATOR = 'CommandOrControl+Shift+Z';
 
 let mainWindow = null;
 let pipWindow = null;
@@ -190,8 +192,18 @@ async function createMainWindow() {
   mainWindow.on('move', save);
 }
 
+function togglePipVisibility() {
+  if (!pipWindow || pipWindow.isDestroyed()) return;
+  if (pipWindow.isVisible()) {
+    pipWindow.hide();
+  } else {
+    pipWindow.show();
+  }
+}
+
 function createPipWindow(query) {
   if (pipWindow && !pipWindow.isDestroyed()) {
+    if (!pipWindow.isVisible()) pipWindow.show();
     pipWindow.focus();
     return pipWindow;
   }
@@ -222,8 +234,21 @@ function createPipWindow(query) {
       event.preventDefault();
     }
   });
-  pipWindow.once('ready-to-show', () => pipWindow.show());
-  pipWindow.on('closed', () => { pipWindow = null; });
+  pipWindow.once('ready-to-show', () => {
+    pipWindow.show();
+    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
+      mainWindow.hide();
+    }
+    const ok = globalShortcut.register(PIP_TOGGLE_ACCELERATOR, togglePipVisibility);
+    if (!ok) console.error(`[shortcut] failed to register ${PIP_TOGGLE_ACCELERATOR}`);
+  });
+  pipWindow.on('closed', () => {
+    pipWindow = null;
+    globalShortcut.unregister(PIP_TOGGLE_ACCELERATOR);
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
+      mainWindow.show();
+    }
+  });
   return pipWindow;
 }
 
@@ -298,4 +323,8 @@ app.whenReady().then(async () => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll();
 });

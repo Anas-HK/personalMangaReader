@@ -95,8 +95,23 @@ string. The renderer detects mode=pip and routes to bootPip() instead
 of the normal boot, which renders only the reader for the given
 chapter.
 
-PiP and main windows do not sync live (would require IPC broadcast).
-They share state.json so the next launch is consistent.
+When PiP opens, the main window auto-hides via mainWindow.hide() so the
+two never appear simultaneously (no duplicate taskbar entries, no
+attention split). Closing the PiP restores the main window. The PiP
+renderer never sees the main window state live; the two share state.json
+so the next launch is consistent.
+
+In PiP mode the renderer is intentionally ultra-minimal: titlebar and
+reader-toolbar hidden by default, only the manga image visible. Moving
+the mouse into the top ~40px reveals the titlebar (close + PiP toggle);
+it auto-hides after ~1.1s once the mouse leaves the zone. The 6px
+#pip-drag-strip div paints at the very top edge with -webkit-app-region:
+drag, keeping the frameless window movable while the titlebar is hidden.
+
+While the PiP window exists, the accelerator at PIP_TOGGLE_ACCELERATOR
+(top of main.js, currently Ctrl+Shift+Z) is registered globally and
+toggles PiP visibility (pipWindow.hide / show, not close). It is
+unregistered on PiP close so the key combo is freed for other apps.
 
 ## Keyboard
 
@@ -108,6 +123,7 @@ They share state.json so the next launch is consistent.
   Esc                 back / exit fullscreen
   Home / End          top / bottom of current chapter
   Space               smooth scroll one viewport down
+  Ctrl+Shift+Z        hide / show PiP window (global, only while PiP is open)
   F12 / Ctrl+Shift+I  DevTools (both windows)
 
 ## Building

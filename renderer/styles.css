@@ -435,8 +435,19 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .reader-view:hover .page-progress,
 .reader-view.toolbar-hidden .page-progress { opacity: 1; }
 
-/* ----- PiP mode ----- */
-body.pip-mode .titlebar { height: 28px; }
+/* ----- PiP mode: ultra-minimal (image only; chrome reveals on hover) ----- */
+body.pip-mode .titlebar {
+  height: 28px;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(10, 10, 12, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-soft);
+  transform: translateY(-100%);
+  transition: transform 0.18s ease;
+}
+body.pip-mode.show-chrome .titlebar { transform: translateY(0); }
 body.pip-mode .titlebar .back-btn,
 body.pip-mode .titlebar .breadcrumb { display: none; }
 body.pip-mode .brand { font-size: 11px; }
@@ -445,21 +456,30 @@ body.pip-mode .titlebar-controls .ctrl#full-btn,
 body.pip-mode .titlebar-controls .ctrl#min-btn,
 body.pip-mode .titlebar-controls .ctrl#max-btn,
 body.pip-mode .titlebar-controls .ctrl#aot-btn { display: none; }
+
+/* Always-on drag strip across the top edge so the frameless window stays movable
+   even while the titlebar is hidden. Real DOM element (not a pseudo) because
+   -webkit-app-region: drag on ::before is unreliable in Electron. */
+#pip-drag-strip { display: none; }
+body.pip-mode #pip-drag-strip {
+  display: block;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 6px;
+  z-index: 99;
+  -webkit-app-region: drag;
+}
+
 body.pip-mode #app {
-  top: 28px;
+  top: 0;
   scrollbar-width: none;
 }
 body.pip-mode #app::-webkit-scrollbar { width: 0; display: none; }
-body.pip-mode .reader-toolbar {
-  height: 36px;
-  padding: 0 6px;
-  gap: 4px;
-}
-body.pip-mode .reader-toolbar .icon-btn { width: 26px; height: 26px; }
-body.pip-mode .reader-toolbar .picker { padding: 4px 6px; font-size: 12px; max-width: 200px; }
-body.pip-mode .reader-toolbar .pages-indicator { font-size: 11px; }
+body.pip-mode .reader-toolbar { display: none; }
 body.pip-mode .reader-pages { max-width: 100%; }
-body.pip-mode .page-progress { font-size: 11px; padding: 4px 8px; }
+body.pip-mode .page-progress { display: none; }
+body.pip-mode .chapter-divider { padding: 14px; font-size: 11px; }
+body.pip-mode .chapter-divider.end { padding: 22px 14px; }
 
 /* ----- Toast ----- */
 .toast {

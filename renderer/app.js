@@ -501,6 +501,36 @@ async function bootPip() {
   state.chapterIdx = Math.max(0, Math.min(chapterIdx, chapters.length - 1));
   setBreadcrumb([]);
   renderReader();
+  setupPipChromeReveal();
+  // Briefly flash the chrome on launch so the user knows it's there.
+  document.body.classList.add('show-chrome');
+  setTimeout(() => document.body.classList.remove('show-chrome'), 1400);
+  toast('Ctrl+Shift+Z to hide / show this window', 3600);
+}
+
+function setupPipChromeReveal() {
+  const TRIGGER_PX = 40;
+  const HIDE_DELAY_MS = 1100;
+  let hideTimer = 0;
+  let inZone = false;
+  const show = () => {
+    clearTimeout(hideTimer);
+    hideTimer = 0;
+    document.body.classList.add('show-chrome');
+  };
+  const scheduleHide = () => {
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => {
+      document.body.classList.remove('show-chrome');
+      hideTimer = 0;
+    }, HIDE_DELAY_MS);
+  };
+  document.addEventListener('mousemove', (e) => {
+    const within = e.clientY <= TRIGGER_PX;
+    if (within && !inZone) { inZone = true; show(); }
+    else if (!within && inZone) { inZone = false; scheduleHide(); }
+  });
+  document.addEventListener('mouseleave', () => { inZone = false; scheduleHide(); });
 }
 
 async function boot() {
